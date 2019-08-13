@@ -49,143 +49,154 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  DateTime _currentDate = DateTime(2019, 2, 3);
-  DateTime _currentDate2 = DateTime(2019, 2, 3);
+  List<DateTime> dateListForAvailable = new List<DateTime>();
+  List<DateTime> dateListForAppointment = new List<DateTime>();
+
+  DateTime _currentDate = DateTime.now();
+  DateTime _currentDate2 = DateTime.now();
   String _currentMonth = '';
 //  List<DateTime> _markedDate = [DateTime(2018, 9, 20), DateTime(2018, 10, 11)];
   static Widget _eventIcon = new Container(
     decoration: new BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(1000)),
-        border: Border.all(color: Colors.blue, width: 2.0)),
+        border: Border.all(color: Colors.grey, width: 2.0)),
     child: new Icon(
-      Icons.person,
-      color: Colors.amber,
+      Icons.event_available,
+      color: Colors.grey,
     ),
   );
 
-  EventList<Event> _markedDateMap = new EventList<Event>(
-    events: {
-      new DateTime(2019, 2, 10): [
-        new Event(
-          date: new DateTime(2019, 2, 10),
-          title: 'Event 1',
-          icon: _eventIcon,
-        ),
-        new Event(
-          date: new DateTime(2019, 2, 10),
-          title: 'Event 2',
-          icon: _eventIcon,
-        ),
-        new Event(
-          date: new DateTime(2019, 2, 10),
-          title: 'Event 3',
-          icon: _eventIcon,
-        ),
-      ],
-    },
+  static Widget _arrowIcon = new Container(
+    decoration: new BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(1000)),
+        border: Border.all(color: Colors.red, width: 2.0)),
+    child: new Icon(
+      Icons.access_alarms,
+      color: Colors.red,
+    ),
   );
 
-  CalendarCarousel _calendarCarousel, _calendarCarouselNoHeader;
+
+
+  EventList<Event> _markedDateMap = new EventList<Event>();
+
+
+
+  CalendarCarousel _calendarCarouselNoHeader;
+
+  final items = List<String>.generate(3, (i) => "Item ${i + 1}");
+
+  Widget alertDialoadContainer() {
+    return Container(
+      height: 300.0, // Change as per your requirement
+      width: 300.0, // Change as per your requirement
+      child: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return Dismissible(
+            key: ObjectKey(items[index]),
+            child: Container(
+              padding: EdgeInsets.all(20.0),
+              child: Text(items[index]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<TimeOfDay> selectedTime() async
+  {
+    return showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<void> _neverSatisfied(String date) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(date),
+          content: alertDialoadContainer(),
+          actions: <Widget>[
+             FlatButton(
+              child: Text('新增時間'),
+              onPressed: () async {
+                await selectedTime();
+              },
+            ),
+            FlatButton(
+              child: Text('取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   void initState() {
-    /// Add more events to _markedDateMap EventList
-    _markedDateMap.add(
-        new DateTime(2019, 2, 25),
-        new Event(
-          date: new DateTime(2019, 2, 25),
-          title: 'Event 5',
-          icon: _eventIcon,
-        ));
+    //assume we have a date list for seller available date
+    dateListForAvailable.add(DateTime(2019, 8, 13));
+    dateListForAvailable.add(DateTime(2019, 8, 14));
+    dateListForAvailable.add(DateTime(2019, 8, 15));
 
-    _markedDateMap.add(
-        new DateTime(2019, 2, 10),
-        new Event(
-          date: new DateTime(2019, 2, 10),
-          title: 'Event 4',
-          icon: _eventIcon,
-        ));
+    //assume we have a date list for buyer appointment date
+    dateListForAppointment.add(DateTime(2019, 8, 17));
+    dateListForAppointment.add(DateTime(2019, 8, 17));
+    dateListForAppointment.add(DateTime(2019, 8, 17));
 
-    _markedDateMap.addAll(new DateTime(2019, 2, 11), [
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 1',
+    for (var r in dateListForAvailable) {
+      _markedDateMap.add(r,new Event(
+        date: r,
+        title: 'Available',
         icon: _eventIcon,
-      ),
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 2',
-        icon: _eventIcon,
-      ),
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 3',
-        icon: _eventIcon,
-      ),
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 4',
-        icon: _eventIcon,
-      ),
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 23',
-        icon: _eventIcon,
-      ),
-      new Event(
-        date: new DateTime(2019, 2, 11),
-        title: 'Event 123',
-        icon: _eventIcon,
-      ),
-    ]);
+      ));
+    }
+
+    for (var r in dateListForAppointment) {
+      _markedDateMap.add(r,new Event(
+        date: r,
+        title: 'Appointment',
+        icon: _arrowIcon,
+      ));
+    }
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    /// Example with custom icon
-    _calendarCarousel = CalendarCarousel<Event>(
-      onDayPressed: (DateTime date, List<Event> events) {
-        this.setState(() => _currentDate = date);
-        events.forEach((event) => print(event.title));
-      },
-      weekendTextStyle: TextStyle(
-        color: Colors.red,
-      ),
-      thisMonthDayBorderColor: Colors.grey,
-//          weekDays: null, /// for pass null when you do not want to render weekDays
-//          headerText: Container( /// Example for rendering custom header
-//            child: Text('Custom Header'),
-//          ),
-//          markedDates: _markedDate,
-      weekFormat: true,
-      markedDatesMap: _markedDateMap,
-      height: 200.0,
-      selectedDateTime: _currentDate2,
-//          daysHaveCircularBorder: false, /// null for not rendering any border, true for circular border, false for rectangular border
-      customGridViewPhysics: NeverScrollableScrollPhysics(),
-      markedDateShowIcon: true,
-      markedDateIconMaxShown: 2,
-      todayTextStyle: TextStyle(
-        color: Colors.blue,
-      ),
-      markedDateIconBuilder: (event) {
-        return event.icon;
-      },
-      todayBorderColor: Colors.green,
-      markedDateMoreShowTotal:
-          false, // null for not showing hidden events indicator
-//          markedDateIconMargin: 9,
-//          markedDateIconOffset: 3,
-    );
-
     /// Example Calendar Carousel without header and custom prev & next button
     _calendarCarouselNoHeader = CalendarCarousel<Event>(
       todayBorderColor: Colors.green,
-      onDayPressed: (DateTime date, List<Event> events) {
-        this.setState(() => _currentDate2 = date);
-        events.forEach((event) => print(event.title));
+      staticSixWeekFormat: true,
+       onDayPressed: (DateTime date, List<Event> events) async {
+        if (events
+            .where((item) => item.title == "Appointment")
+            .length > 0) {
+          await _neverSatisfied(DateFormat('yyyy-MM-dd').format(events[0].date));
+        }
+        else if(events
+            .where((item) => item.title == "Available")
+            .length > 0){
+          await selectedTime();
+        }
       },
       weekendTextStyle: TextStyle(
         color: Colors.red,
@@ -194,13 +205,13 @@ class _MyHomePageState extends State<MyHomePage> {
       weekFormat: false,
       markedDatesMap: _markedDateMap,
       height: 420.0,
-      selectedDateTime: _currentDate2,
+      //selectedDateTime: _currentDate2,
       customGridViewPhysics: NeverScrollableScrollPhysics(),
       markedDateShowIcon: true,
       markedDateIconMaxShown: 2,
       markedDateMoreShowTotal:
           false, // null for not showing hidden events indicator
-      showHeader: false,
+      showHeader: true,
       markedDateIconBuilder: (event) {
         return event.icon;
       },
@@ -229,10 +240,10 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               //custom icon
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 16.0),
-                child: _calendarCarousel,
-              ), // This trailing comma makes auto-formatting nicer for build methods.
+//              Container(
+//                margin: EdgeInsets.symmetric(horizontal: 16.0),
+//                child: _calendarCarousel,
+//              ), // This trailing comma makes auto-formatting nicer for build methods.
               //custom icon without header
               Container(
                 margin: EdgeInsets.only(
